@@ -6,6 +6,16 @@ Pure frontend DWF/DWFx viewer for browsers. It parses DWF/DWFx packages locally 
 
 This repository is structured as a publishable npm package plus a static Cloudflare Pages demo. The same build is published under both `dwf-viewer` and `@flyfish-dev/dwf-viewer`.
 
+## Links
+
+| Target | URL |
+|---|---|
+| Live demo | https://dwf-viewer-demo.pages.dev/ |
+| GitHub repository | https://github.com/flyfish-dev/dwf-viewer |
+| Official documentation | https://github.com/flyfish-dev/dwf-viewer#readme |
+| npm package | https://www.npmjs.com/package/dwf-viewer |
+| Scoped npm package | https://www.npmjs.com/package/@flyfish-dev/dwf-viewer |
+
 Supported paths:
 
 | Format / content | Status |
@@ -127,9 +137,16 @@ GitHub release publishing can use provenance through the included workflow and `
 
 ## Cloudflare Pages demo
 
+Live demo:
+
+```text
+https://dwf-viewer-demo.pages.dev/
+```
+
 The repository includes `wrangler.toml` with:
 
 ```toml
+name = "dwf-viewer-demo"
 pages_build_output_dir = "./demo-dist"
 ```
 
@@ -144,11 +161,12 @@ Root directory: /
 Direct upload:
 
 ```bash
-npm run build:demo
-npx wrangler pages deploy demo-dist
+npm run deploy:pages
 ```
 
 `build:demo` produces a static directory containing only demo HTML/JS, `dist`, `public/dwfv-render.wasm`, `styles`, and the curated examples.
+
+GitHub Actions builds the demo for every pull request. On pushes to `main`, it deploys to Cloudflare Pages when the repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are present.
 
 ## Public API
 
