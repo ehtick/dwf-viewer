@@ -1,0 +1,91 @@
+{
+  "name": "dwf-viewer",
+  "version": "0.5.0",
+  "private": false,
+  "type": "module",
+  "description": "Pure frontend DWF/DWFx viewer with W2D WebGL rendering, W3D/HSF Three.js 3D rendering, DWFx/XPS support, and optional WASM raster fallback.",
+  "license": "AGPL-3.0-only",
+  "author": "flyfish-dev",
+  "homepage": "https://github.com/flyfish-dev/dwf-viewer#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flyfish-dev/dwf-viewer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/flyfish-dev/dwf-viewer/issues"
+  },
+  "keywords": [
+    "dwf",
+    "dwfx",
+    "w2d",
+    "w3d",
+    "hsf",
+    "xps",
+    "cad",
+    "viewer",
+    "webgl",
+    "threejs",
+    "wasm"
+  ],
+  "sideEffects": [
+    "styles/dwf-viewer.css"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./styles/dwf-viewer.css",
+    "./wasm/dwfv-render.wasm": "./public/dwfv-render.wasm",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "public/dwfv-render.wasm",
+    "styles/dwf-viewer.css",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "CHANGELOG.md",
+    "PRODUCTION_3D_NOTES.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "npm@11.12.1",
+  "scripts": {
+    "build:wasm": "bash scripts/build-wasm.sh",
+    "build:ts": "tsc -p tsconfig.json",
+    "build": "npm run build:wasm && npm run build:ts",
+    "build:demo": "npm run build && node scripts/build-demo.mjs",
+    "clean": "rm -rf dist demo-dist public/dwfv-render.wasm",
+    "inspect:dwfx": "node scripts/inspect-dwfx.mjs",
+    "validate:production": "node scripts/validate-production.mjs",
+    "check:examples": "node scripts/check-examples.mjs",
+    "check:package": "node scripts/package-check.mjs",
+    "prepublishOnly": "npm run build && npm run validate:production && npm run check:package",
+    "pack:dry": "npm pack --dry-run",
+    "publish:unscoped": "node scripts/publish-npm.mjs dwf-viewer",
+    "publish:scoped": "node scripts/publish-npm.mjs @flyfish-dev/dwf-viewer",
+    "publish:all": "node scripts/publish-npm.mjs dwf-viewer @flyfish-dev/dwf-viewer",
+    "demo:serve": "npm run build:demo && python3 -m http.server 8080 -d demo-dist",
+    "deploy:pages": "npm run build:demo && npx wrangler pages deploy demo-dist"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5"
+  },
+  "peerDependencies": {
+    "three": ">=0.150.0"
+  },
+  "peerDependenciesMeta": {
+    "three": {
+      "optional": true
+    }
+  }
+}

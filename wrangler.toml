@@ -1,0 +1,3 @@
+name = "dwf-viewer-demo"
+pages_build_output_dir = "./demo-dist"
+compatibility_date = "2026-06-11"
