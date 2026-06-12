@@ -1,5 +1,7 @@
 # Implementation notes
 
+DWF Viewer is the world's first open-source pure frontend DWF/DWFx preview component for the web. These notes document the browser-native parser and renderer paths behind that positioning: no server-side CAD conversion, English-first public documentation, and a demo UI that can switch to Chinese.
+
 ## Rendering paths
 
 DWFx is OPC/XPS based, so the viewer parses ZIP + XML and renders `FixedPage` content directly to Canvas2D/WASM primitives.

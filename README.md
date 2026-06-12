@@ -1,6 +1,8 @@
 # DWF Viewer
 
-Pure frontend DWF/DWFx CAD viewer for browsers. It parses DWF/DWFx packages locally and renders common 2D and 3D content without a server-side CAD conversion service.
+**The world's first open-source pure frontend DWF/DWFx preview component for the web.** It parses DWF/DWFx packages locally and renders common 2D and 3D CAD content in the browser without a server-side CAD conversion service.
+
+English is the default language for the README, npm package, and online demo. The demo UI can switch to Chinese from the language selector.
 
 ## Links
 
@@ -17,7 +19,14 @@ Current version: `0.6.1`
 
 DWF and DWFx are still common in manufacturing, construction, field service, engineering archives, PLM, after-sales systems, and document management products. Many web systems can preview PDF, Office files, and images, but DWF often falls back to desktop viewers, server-side conversion, or static thumbnails.
 
-DWF Viewer is built for the browser-native path: parse the package, decode the sheet/model data, and render it directly inside a web application. This keeps integration simple for private deployments and reduces conversion queues, temporary files, and infrastructure coupling.
+To our knowledge, DWF Viewer is the first open-source component focused on the pure frontend DWF/DWFx path: parse the package, decode the sheet/model data, and render it directly inside a web application. This keeps integration simple for private deployments and reduces conversion queues, temporary files, and infrastructure coupling.
+
+<details>
+<summary>中文简介</summary>
+
+DWF Viewer 是面向 Web 的开源纯前端 DWF/DWFx 预览组件。它在浏览器内解析 DWF/DWFx 包并渲染常见 2D/3D CAD 内容，无需服务端 CAD 转换服务。文档与在线 Demo 默认使用英文，Demo 可在界面中切换为中文。
+
+</details>
 
 ## Supported Paths
 
@@ -204,7 +213,7 @@ Direct upload:
 npm run deploy:pages
 ```
 
-`build:demo` produces a static directory containing demo HTML/JS, a versioned `dist-v*` directory, `public/dwfv-render.wasm`, `styles`, and curated examples. Versioned dist assets prevent stale browser module caches after releases.
+`build:demo` produces a static directory containing demo HTML/JS, a versioned `dist-v*` directory, `public/dwfv-render.wasm`, `styles`, and curated examples. Versioned dist assets prevent stale browser module caches after releases. The demo defaults to English and includes a Chinese language switch for bilingual product teams.
 
 ## Public API
 

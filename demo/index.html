@@ -1,9 +1,10 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>DWF Viewer Demo</title>
+  <meta name="description" content="The world's first open-source pure frontend DWF/DWFx preview component. English by default, switchable to Chinese." />
   <link rel="stylesheet" href="../styles/dwf-viewer.css" />
   <style>
     html, body { height: 100%; margin: 0; }
@@ -25,19 +26,20 @@
   <header class="app-header">
     <div class="brand">
       <strong>DWF Viewer</strong>
-      <small>Pure frontend · XPS/W2D WebGL · W3D/HSF Three.js</small>
+      <small data-i18n="tagline">World's first open-source pure frontend DWF/DWFx preview component</small>
     </div>
-    <input id="file" type="file" accept=".dwf,.dwfx,model/vnd.dwf,application/vnd.ms-xpsdocument" />
+    <input id="file" type="file" accept=".dwf,.dwfx,model/vnd.dwf,application/vnd.ms-xpsdocument" aria-label="Open local DWF or DWFx file" />
     <div class="controls">
-      <select id="demoSelect" aria-label="示例文件"></select>
-      <button id="loadDemo">加载示例</button>
-      <button id="fit">适应</button>
+      <select id="demoSelect" aria-label="Example file"></select>
+      <button id="loadDemo" data-i18n="loadSample">Load sample</button>
+      <button id="fit" data-i18n="fit">Fit</button>
       <span id="demoHint" class="hint"></span>
     </div>
     <div class="toggles">
-      <label><input id="webgl" type="checkbox" checked /> WebGL 加速</label>
-      <label><input id="wasm" type="checkbox" checked /> WASM fallback</label>
-      <label>线宽 <select id="lineMode"><option value="adaptive" selected>CAD 总览细线</option><option value="hairline">细线</option><option value="physical">真实线宽</option></select></label>
+      <label><input id="webgl" type="checkbox" checked /> <span data-i18n="webgl">WebGL acceleration</span></label>
+      <label><input id="wasm" type="checkbox" checked /> <span data-i18n="wasm">WASM fallback</span></label>
+      <label><span data-i18n="lineWeight">Line weight</span> <select id="lineMode"><option value="adaptive" selected>CAD adaptive</option><option value="hairline">Hairline</option><option value="physical">Physical</option></select></label>
+      <label><span data-i18n="language">Language</span> <select id="language" aria-label="Language"><option value="en" selected>English</option><option value="zh">中文</option></select></label>
     </div>
   </header>
   <main id="viewer"></main>

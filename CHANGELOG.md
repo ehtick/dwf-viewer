@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Updated public positioning to describe DWF Viewer as the world's first open-source pure frontend DWF/DWFx preview component.
+- Made the demo UI English by default and added a Chinese language switch.
+
 ## 0.6.1
 
 - Changed the public demo default sample to `Blocks and Tables · Binary W2D DWF` for a faster and clearer first load.

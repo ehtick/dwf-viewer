@@ -4,7 +4,8 @@
     "title": "Blocks and Tables · Binary W2D DWF",
     "kind": "2d",
     "path": "blocks-and-tables.dwf",
-    "description": "Autodesk 官方二进制 WHIP!/W2D ePlot 示例，默认加载，观感清晰且打开速度快，用于验证 WebGL vector backend。",
+    "description": "Official Autodesk binary WHIP!/W2D ePlot sample. This is the default demo because it loads quickly and gives a clear first impression of the WebGL vector backend.",
+    "descriptionZh": "Autodesk 官方二进制 WHIP!/W2D ePlot 示例，默认加载，观感清晰且打开速度快，用于验证 WebGL vector backend。",
     "expected": {
       "pageKind": "w2d-text",
       "pages": 2,
@@ -17,7 +18,8 @@
     "kind": "2d",
     "path": "autodesk-floor-plans.dwfx",
     "pageIndex": 3,
-    "description": "多页建筑图纸示例，可切换到 A03 First Floor Plan，用于验证 XPS WebGL、嵌入字体、细线总览与缩放性能。",
+    "description": "Multi-page architectural DWFx/XPS sample. Switch to A03 First Floor Plan to validate XPS WebGL rendering, embedded fonts, thin-line overview, and zoom performance.",
+    "descriptionZh": "多页建筑图纸示例，可切换到 A03 First Floor Plan，用于验证 XPS WebGL、嵌入字体、细线总览与缩放性能。",
     "expected": {
       "pageKind": "xps-fixed-page",
       "pages": 18,
@@ -29,7 +31,8 @@
     "title": "Robot Arm · 3D eModel DWFx",
     "kind": "3d",
     "path": "robot-arm.dwfx",
-    "description": "真实 W3D/HSF shell 几何、装配树、材质、纹理与特征边示例。",
+    "description": "Real W3D/HSF shell geometry sample with assembly tree, materials, textures, and feature edges.",
+    "descriptionZh": "真实 W3D/HSF shell 几何、装配树、材质、纹理与特征边示例。",
     "expected": {
       "pageKind": "w3d-model",
       "minMeshes": 30,
@@ -42,7 +45,8 @@
     "title": "Minimal XPS · DWFx",
     "kind": "2d",
     "path": "minimal-xps.dwfx",
-    "description": "小型 DWFx/XPS FixedPage 示例，用于验证 DWFx OPC/XPS 路径。",
+    "description": "Small DWFx/XPS FixedPage sample for validating the DWFx OPC/XPS path.",
+    "descriptionZh": "小型 DWFx/XPS FixedPage 示例，用于验证 DWFx OPC/XPS 路径。",
     "expected": {
       "pageKind": "xps-fixed-page",
       "maxWarnings": 0
@@ -53,7 +57,8 @@
     "title": "Textual W2D · DWF",
     "kind": "2d",
     "path": "text-w2d.dwf",
-    "description": "文本型 W2D 容器示例，用于 smoke test 和回归测试。",
+    "description": "Textual W2D container sample for smoke tests and regression checks.",
+    "descriptionZh": "文本型 W2D 容器示例，用于 smoke test 和回归测试。",
     "expected": {
       "pageKind": "w2d-text",
       "maxWarnings": 0
