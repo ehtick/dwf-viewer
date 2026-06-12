@@ -20,6 +20,12 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: npm
       - run: npm ci
-      - run: npm run publish:all -- --provenance
+      - name: Publish packages
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN is not configured; skipping npm publish. Use local passkey publishing or add the secret for automated publishing."
+            exit 0
+          fi
+          npm run publish:all -- --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
