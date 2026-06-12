@@ -53,6 +53,7 @@ export class PageRenderer {
   }
 
   dispose(): void {
+    this.xps?.dispose();
     this.w2d?.dispose();
     this.w3d?.dispose();
   }

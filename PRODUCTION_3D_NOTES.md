@@ -46,3 +46,7 @@ Serve the WASM file with `application/wasm`. The Cloudflare Pages demo writes `_
 ## Unsupported semantics
 
 Unsupported historical HSF opcodes, advanced CAD display-list behavior, and full Design Review parity are tracked as incremental parser work. The rendering contract is: exact-enough supported semantics are displayed, unsupported semantics are diagnosed, and known-failing 3D geometry is not hidden by image fallback.
+
+## 2D production rendering update
+
+Version 0.6.0 adds WebGL acceleration for XPS/DWFx vector geometry and keeps text/images in a Canvas overlay. This avoids CPU redraw bottlenecks when zooming dense sheets and keeps GPU memory bounded through scene cache limits. Embedded ODTTF fonts are deobfuscated and loaded through FontFace where supported, producing CAD-like text weights in the demo.

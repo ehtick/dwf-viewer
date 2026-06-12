@@ -45,27 +45,23 @@ compile_with_target() {
     -o "$OUT" "$SRC"
 }
 
-BUILD_LOG="$(mktemp -t dwfv-wasm-build.XXXXXX.log)"
-trap 'rm -f "$BUILD_LOG"' EXIT
-
 # The correct LLVM targets are wasm32-unknown-unknown or wasm32.  The previous
 # wasm32-unknown-unknown-wasm triple is not accepted by many Clang builds.
-if compile_with_target "wasm32-unknown-unknown" >"$BUILD_LOG" 2>&1; then
+if compile_with_target "wasm32-unknown-unknown" >/dev/null 2>&1; then
   echo "Built $OUT with clang target wasm32-unknown-unknown"
   exit 0
 fi
 
-if compile_with_target "wasm32" >"$BUILD_LOG" 2>&1; then
+if compile_with_target "wasm32" >/dev/null 2>&1; then
   echo "Built $OUT with clang target wasm32"
   exit 0
 fi
 
 if [[ -f "$PREBUILT" ]]; then
   cp "$PREBUILT" "$OUT"
-  echo "warning: this clang cannot emit wasm32; copied prebuilt wasm to $OUT" >&2
+  echo "Copied prebuilt wasm to $OUT"
   exit 0
 fi
 
-cat "$BUILD_LOG" >&2
 echo "error: unable to build wasm and no prebuilt module is available." >&2
 exit 1

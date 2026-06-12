@@ -1,11 +1,29 @@
 [
   {
+    "id": "autodesk-floor-plans-dwfx",
+    "title": "Autodesk Floor Plans · 2D DWFx/XPS",
+    "kind": "2d",
+    "path": "autodesk-floor-plans.dwfx",
+    "pageIndex": 3,
+    "description": "多页建筑图纸示例，默认打开 A03 First Floor Plan，用于验证 XPS WebGL、嵌入字体、细线总览与缩放性能。",
+    "expected": {
+      "pageKind": "xps-fixed-page",
+      "pages": 18,
+      "maxWarnings": 0
+    }
+  },
+  {
     "id": "robot-arm-3d",
     "title": "Robot Arm · 3D eModel DWFx",
     "kind": "3d",
     "path": "robot-arm.dwfx",
     "description": "真实 W3D/HSF shell 几何、装配树、材质、纹理与特征边示例。",
-    "expected": { "pageKind": "w3d-model", "minMeshes": 30, "minTriangles": 40000, "maxWarnings": 0 }
+    "expected": {
+      "pageKind": "w3d-model",
+      "minMeshes": 30,
+      "minTriangles": 40000,
+      "maxWarnings": 0
+    }
   },
   {
     "id": "blocks-tables-2d",
@@ -13,7 +31,11 @@
     "kind": "2d",
     "path": "blocks-and-tables.dwf",
     "description": "Autodesk 官方二进制 WHIP!/W2D ePlot 示例，验证 WebGL vector backend。",
-    "expected": { "pageKind": "w2d-text", "pages": 2, "maxWarnings": 0 }
+    "expected": {
+      "pageKind": "w2d-text",
+      "pages": 2,
+      "maxWarnings": 0
+    }
   },
   {
     "id": "minimal-xps-dwfx",
@@ -21,7 +43,10 @@
     "kind": "2d",
     "path": "minimal-xps.dwfx",
     "description": "小型 DWFx/XPS FixedPage 示例，用于验证 DWFx OPC/XPS 路径。",
-    "expected": { "pageKind": "xps-fixed-page", "maxWarnings": 0 }
+    "expected": {
+      "pageKind": "xps-fixed-page",
+      "maxWarnings": 0
+    }
   },
   {
     "id": "textual-w2d",
@@ -29,6 +54,9 @@
     "kind": "2d",
     "path": "text-w2d.dwf",
     "description": "文本型 W2D 容器示例，用于 smoke test 和回归测试。",
-    "expected": { "pageKind": "w2d-text", "maxWarnings": 0 }
+    "expected": {
+      "pageKind": "w2d-text",
+      "maxWarnings": 0
+    }
   }
 ]

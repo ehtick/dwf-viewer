@@ -68,7 +68,7 @@ export interface PageRenderOptions {
 }
 
 export interface RenderStats {
-  backend: 'canvas2d' | 'wasm-raster' | 'webgl' | 'threejs-webgl' | 'image' | 'unsupported';
+  backend: 'canvas2d' | 'wasm-raster' | 'webgl' | 'webgl-xps' | 'threejs-webgl' | 'image' | 'unsupported';
   commands: number;
   warnings: Diagnostic[];
 }

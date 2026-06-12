@@ -1,20 +1,27 @@
 # Changelog
 
+## 0.6.0
+
+- Added WebGL-accelerated XPS/DWFx 2D vector rendering through `WebGlXpsBackend`.
+- Added XPS ODTTF embedded font deobfuscation/loading for CAD-like text appearance.
+- Tuned demo defaults for dense CAD overview linework and lower DPR memory pressure.
+- Added curated Autodesk floor-plan DWFx demo entry with default A03 sheet.
+- Coalesced viewer render requests to avoid zoom/pan render pile-ups.
+- Kept Cloudflare demo assets versioned under `dist-v0.6.0` to prevent stale browser module caches.
+
 ## 0.5.1
 
-- Published as `dwf-viewer` and `@flyfish-dev/dwf-viewer` with AGPL-3.0-only package metadata.
 - Added CAD adaptive line-weight rendering for XPS FixedPage, W2D Canvas/WASM, and W2D WebGL paths.
-- Added overview text LOD culling to avoid black annotation blobs at fit-to-page while preserving text when zoomed in.
+- Added overview text LOD culling to avoid dense annotation blobs at fit-to-page while preserving text when zoomed in.
 - Added embedded XPS TrueType font loading for Glyphs when browsers support the FontFace API.
 - Added demo line-weight mode selector: CAD adaptive, hairline, physical.
+- Versioned demo dist assets under `dist-v0.5.1` to prevent stale browser module caches.
 
 ## 0.5.0
 
-- Prepared repository for public npm release and Cloudflare Pages demo deployment.
-- Renamed the public package metadata to `dwf-viewer`.
-- Added dual npm publishing support for `dwf-viewer` and `@flyfish-dev/dwf-viewer`.
-- Switched the project license to `AGPL-3.0-only` and added `NOTICE`.
-- Normalized GitHub repository metadata for `flyfish-dev/dwf-viewer`.
+- Prepared the repository for public npm release and Cloudflare Pages demo deployment.
+- Published normalized packages as `dwf-viewer` and `@flyfish-dev/dwf-viewer`.
+- Adopted `AGPL-3.0-only` with `NOTICE` for strict open-source distribution.
 - Added curated, de-duplicated demo example manifest.
 - Removed production-success info diagnostics from W3D/eModel pages so the Robot Arm demo renders with zero page diagnostics.
-- Added static demo build pipeline and package validation scripts.
+- Added static demo build pipeline, package validation scripts, CI, and publish helpers.

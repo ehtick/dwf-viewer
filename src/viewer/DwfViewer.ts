@@ -59,6 +59,8 @@ export class DwfViewer {
   private yaw = -0.78;
   private pitch = 0.55;
   private pendingRender?: Promise<RenderStats>;
+  private rendering = false;
+  private renderAgain = false;
   private renderRaf = 0;
   private renderSeq = 0;
   private currentDpr = 1;
@@ -166,41 +168,54 @@ export class DwfViewer {
 
   async render(): Promise<RenderStats | undefined> {
     if (!this.renderer || !this.doc) return undefined;
-    this.resizeCanvasToDisplaySize();
-    const page = this.doc.pageData[this.pageIndex];
-    if (!page) return undefined;
-    const seq = ++this.renderSeq;
-    const task = this.renderer.render(this.pageIndex, this.canvas, {
-      zoom: this.zoom,
-      panX: this.panX,
-      panY: this.panY,
-      preferWebgl: this.preferWebgl,
-      preferWasm: this.preferWasm,
-      wasmUrl: this.wasmUrl,
-      background: this.background,
-      maxGpuCacheBytes: this.maxGpuCacheBytes,
-      maxCachedScenes: this.maxCachedScenes,
-      webglCanvas: this.webglCanvas,
-      yaw: this.yaw,
-      pitch: this.pitch,
-      lineWeightMode: this.lineWeightMode,
-      minStrokeCssPx: this.minStrokeCssPx,
-      maxOverviewStrokeCssPx: this.maxOverviewStrokeCssPx,
-      minTextCssPx: this.minTextCssPx,
-      minFilledAreaCssPx: this.minFilledAreaCssPx
-    });
-    this.pendingRender = task;
+    if (this.rendering) {
+      this.renderAgain = true;
+      return this.pendingRender;
+    }
+    this.rendering = true;
     try {
-      const stats = await task;
-      if (this.pendingRender === task && seq === this.renderSeq) {
-        const warnCount = stats.warnings.filter(w => w.level !== 'info').length;
-        const dprText = this.currentDpr > 1 ? ` · DPR ${this.currentDpr.toFixed(2)}` : '';
-        this.setStatus(`${this.doc.kind.toUpperCase()} · ${page.kind} · ${stats.backend} · ${stats.commands} ops${dprText}${warnCount ? ` · ${warnCount} 警告` : ''}`, warnCount > 0);
+      this.resizeCanvasToDisplaySize();
+      const page = this.doc.pageData[this.pageIndex];
+      if (!page) return undefined;
+      const seq = ++this.renderSeq;
+      const task = this.renderer.render(this.pageIndex, this.canvas, {
+        zoom: this.zoom,
+        panX: this.panX,
+        panY: this.panY,
+        preferWebgl: this.preferWebgl,
+        preferWasm: this.preferWasm,
+        wasmUrl: this.wasmUrl,
+        background: this.background,
+        maxGpuCacheBytes: this.maxGpuCacheBytes,
+        maxCachedScenes: this.maxCachedScenes,
+        webglCanvas: this.webglCanvas,
+        yaw: this.yaw,
+        pitch: this.pitch,
+        lineWeightMode: this.lineWeightMode,
+        minStrokeCssPx: this.minStrokeCssPx,
+        maxOverviewStrokeCssPx: this.maxOverviewStrokeCssPx,
+        minTextCssPx: this.minTextCssPx,
+        minFilledAreaCssPx: this.minFilledAreaCssPx
+      });
+      this.pendingRender = task;
+      try {
+        const stats = await task;
+        if (this.pendingRender === task && seq === this.renderSeq) {
+          const warnCount = stats.warnings.filter(w => w.level !== 'info').length;
+          const dprText = this.currentDpr > 1 ? ` · DPR ${this.currentDpr.toFixed(2)}` : '';
+          this.setStatus(`${this.doc.kind.toUpperCase()} · ${page.kind} · ${stats.backend} · ${stats.commands} ops${dprText}${warnCount ? ` · ${warnCount} 警告` : ''}`, warnCount > 0);
+        }
+        return stats;
+      } catch (err) {
+        if (seq === this.renderSeq) this.setStatus(`渲染失败：${String(err)}`, true);
+        throw err;
       }
-      return stats;
-    } catch (err) {
-      if (seq === this.renderSeq) this.setStatus(`渲染失败：${String(err)}`, true);
-      throw err;
+    } finally {
+      this.rendering = false;
+      if (this.renderAgain) {
+        this.renderAgain = false;
+        this.requestRender();
+      }
     }
   }
 

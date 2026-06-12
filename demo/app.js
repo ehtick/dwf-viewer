@@ -1,17 +1,19 @@
-import { DwfViewer } from '../dist/index.js?v=0.5.1';
+import { DwfViewer } from '../dist/index.js?v=0.6.0';
 
 const $ = (id) => document.getElementById(id);
 const viewer = new DwfViewer($('viewer'), {
   wasmUrl: '../public/dwfv-render.wasm',
   preferWebgl: true,
   preferWasm: true,
-  maxDevicePixelRatio: 2,
-  maxCanvasPixels: 16_777_216,
-  maxGpuCacheBytes: 160 * 1024 * 1024,
-  maxCachedScenes: 2,
+  maxDevicePixelRatio: 1.5,
+  maxCanvasPixels: 12_000_000,
+  maxGpuCacheBytes: 192 * 1024 * 1024,
+  maxCachedScenes: 4,
   lineWeightMode: 'adaptive',
-  minTextCssPx: 3.5,
-  maxOverviewStrokeCssPx: 1.15
+  minStrokeCssPx: 0.42,
+  minTextCssPx: 1.05,
+  maxOverviewStrokeCssPx: 0.9,
+  minFilledAreaCssPx: 0.04
 });
 
 let demos = [];
@@ -48,7 +50,8 @@ async function loadDemo(demo = selectedDemo()) {
     fileName: demo.path,
     preferWebgl: $('webgl').checked,
     preferWasm: $('wasm').checked,
-    lineWeightMode: $('lineMode').value
+    lineWeightMode: $('lineMode').value,
+    pageIndex: demo.pageIndex ?? 0
   });
 }
 

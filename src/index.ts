@@ -6,6 +6,7 @@ export type { DwfViewerOptions, LoadOptions } from './viewer/DwfViewer.js';
 export { PageRenderer } from './render/PageRenderer.js';
 export { WasmRasterBackend } from './wasm/WasmRasterBackend.js';
 export { WebGlW2dBackend } from './render/WebGlW2dBackend.js';
+export { WebGlXpsBackend } from './render/WebGlXpsBackend.js';
 export { ThreeW3dRenderer } from './render/ThreeW3dRenderer.js';
 export { createThreeGroupFromW3d } from './render/ThreeJsSceneAdapter.js';
 export type { LoadedDwfDocument, PageData, XpsPageData, W2dTextPageData, ImagePageData, UnsupportedPageData, W3dPageData, W3dModelData, W3dMeshData, W2dPrimitive } from './format/document.js';

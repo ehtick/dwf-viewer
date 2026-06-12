@@ -6,19 +6,27 @@ import { IDENTITY, multiplyMatrix, parseBrushColor, parseMatrix, type Matrix2D }
 import { adaptiveStrokeUserWidth, canvasDpr, shouldDrawFilledBounds, shouldDrawTextByPixelSize, type CadLineStyleOptions } from './cadLineStyle.js';
 import { fitPageMatrix } from './viewport.js';
 import { WasmRasterBackend } from '../wasm/WasmRasterBackend.js';
+import { WebGlXpsBackend } from './WebGlXpsBackend.js';
 
 export interface XpsRenderOptions extends CadLineStyleOptions {
   zoom?: number;
   panX?: number;
   panY?: number;
+  preferWebgl?: boolean;
   preferWasm?: boolean;
   wasmUrl?: string;
+  webglCanvas?: HTMLCanvasElement;
+  maxGpuCacheBytes?: number;
+  maxCachedScenes?: number;
   background?: string;
 }
 
 export class XpsRenderer {
   private wasm?: WasmRasterBackend;
+  private webgl?: WebGlXpsBackend;
+  private webglCanvas?: HTMLCanvasElement;
   private readonly fontCache = new Map<string, Promise<string | undefined>>();
+  private readonly xmlCache = new Map<string, Promise<Document>>();
 
   constructor(private readonly document: LoadedDwfDocument) {}
 
@@ -26,8 +34,7 @@ export class XpsRenderer {
     const opc = this.document.opc;
     if (!opc) throw new Error('XPS page requires an OPC package view.');
     const warnings: Diagnostic[] = actionableDiagnostics(page.diagnostics);
-    const xml = await opc.readText(page.sourcePath);
-    const doc = parseXml(xml, page.sourcePath);
+    const doc = await this.getXmlDocument(page.sourcePath);
     const root = doc.documentElement;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('CanvasRenderingContext2D is not available.');
@@ -37,6 +44,26 @@ export class XpsRenderer {
     const pageMatrix = fitPageMatrix({ canvasWidth: canvas.width, canvasHeight: canvas.height, pageWidth: page.width, pageHeight: page.height, zoom: options.zoom, panX: options.panX, panY: options.panY });
     let commands = 0;
 
+    if (options.preferWebgl ?? true) {
+      try {
+        const backend = this.getWebGlBackend(options.webglCanvas);
+        if (options.webglCanvas) options.webglCanvas.style.visibility = 'visible';
+        const stats = backend.render(page, root, canvas, { ...options, compositeToTarget: !options.webglCanvas });
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+        commands += stats.commands;
+        commands += await this.renderElementToCanvas(root, ctx, page.sourcePath, pageMatrix, 1, warnings, { vectors: false, overlays: true }, options, runtime);
+        warnings.push(...stats.warnings);
+        return { backend: 'webgl-xps', commands, warnings };
+      } catch (err) {
+        if (options.webglCanvas) options.webglCanvas.style.visibility = 'hidden';
+        warnings.push(diag('warning', 'WEBGL_XPS_BACKEND_FALLBACK', `WebGL XPS vector path failed, falling back to ${options.preferWasm ? 'WASM raster' : 'Canvas2D'}: ${String(err)}`, page.sourcePath));
+      }
+    }
+
+    if (options.webglCanvas) options.webglCanvas.style.visibility = 'hidden';
     if (options.preferWasm) {
       try {
         this.wasm ??= new WasmRasterBackend({ wasmUrl: options.wasmUrl });
@@ -59,6 +86,34 @@ export class XpsRenderer {
     ctx.restore();
     commands += await this.renderElementToCanvas(root, ctx, page.sourcePath, pageMatrix, 1, warnings, { vectors: true, overlays: true }, options, runtime);
     return { backend: 'canvas2d', commands, warnings };
+  }
+
+
+  private getWebGlBackend(canvas?: HTMLCanvasElement): WebGlXpsBackend {
+    if (!this.webgl || this.webglCanvas !== canvas) {
+      this.webgl?.dispose();
+      this.webgl = new WebGlXpsBackend(canvas);
+      this.webglCanvas = canvas;
+    }
+    return this.webgl;
+  }
+
+  private getXmlDocument(part: string): Promise<Document> {
+    let cached = this.xmlCache.get(part);
+    if (!cached) {
+      const opc = this.document.opc!;
+      cached = opc.readText(part).then(xml => parseXml(xml, part));
+      this.xmlCache.set(part, cached);
+    }
+    return cached;
+  }
+
+  dispose(): void {
+    this.webgl?.dispose();
+    this.webgl = undefined;
+    this.webglCanvas = undefined;
+    this.xmlCache.clear();
+    this.fontCache.clear();
   }
 
   private async renderElementToCanvas(
@@ -213,7 +268,9 @@ export class XpsRenderer {
     const uri = getAttr(el, 'FontUri');
     if (!uri) return undefined;
     const part = resolvePart(pagePath, uri.replace(/^\//, ''));
-    if (/\.odttf$/i.test(part)) return undefined;
+    // XPS/DWFx often stores embedded TrueType fonts as ODTTF.
+    // Deobfuscate and load them so overview text matches CAD viewers instead
+    // of falling back to thick system fonts.
     let cached = this.fontCache.get(part);
     if (!cached) {
       cached = this.loadFontFace(part).catch(err => {
@@ -229,14 +286,25 @@ export class XpsRenderer {
     const FontFaceCtor = (globalThis as unknown as { FontFace?: new (family: string, source: string) => { load(): Promise<unknown> } }).FontFace;
     const fontSet = (document as unknown as { fonts?: { add(face: unknown): void } }).fonts;
     if (!FontFaceCtor || !fontSet) return undefined;
-    const bytes = await this.document.opc!.readBytes(part);
+    let bytes = await this.document.opc!.readBytes(part);
+    let mime = mimeFromPath(part) ?? 'font/ttf';
+    if (/\.odttf$/i.test(part)) {
+      bytes = deobfuscateOdttf(part, bytes);
+      mime = 'font/ttf';
+    }
     const family = `dwfv_xps_${hashString(part)}`;
-    const blob = new Blob([bytes], { type: mimeFromPath(part) ?? 'font/ttf' });
+    const blob = new Blob([bytes], { type: mime });
     const url = URL.createObjectURL(blob);
     const face = new FontFaceCtor(family, `url("${url}")`);
-    await face.load();
-    fontSet.add(face);
-    return family;
+    try {
+      await face.load();
+      fontSet.add(face);
+      URL.revokeObjectURL(url);
+      return family;
+    } catch (err) {
+      URL.revokeObjectURL(url);
+      throw err;
+    }
   }
 
   private async drawImageResource(ctx: CanvasRenderingContext2D, pagePath: string, source: string, matrix: Matrix2D, opacity: number, el: Element): Promise<void> {
@@ -332,6 +400,44 @@ function drawGlyphRunWithIndices(ctx: CanvasRenderingContext2D, text: string, in
     else cursor += ctx.measureText(ch || ' ').width;
   }
   if (charIndex < text.length) ctx.fillText(text.slice(charIndex), cursor, y);
+}
+
+function deobfuscateOdttf(part: string, bytes: Uint8Array): Uint8Array {
+  const name = part.split('/').pop() ?? '';
+  const guid = name.replace(/\.odttf$/i, '').replace(/[^0-9a-fA-F]/g, '');
+  if (guid.length !== 32 || bytes.length < 32) return bytes;
+  const key = new Uint8Array(16);
+  for (let i = 0; i < 16; i++) key[i] = parseInt(guid.slice(i * 2, i * 2 + 2), 16);
+  // XPS font obfuscation uses the GUID bytes in reverse order, repeated over
+  // the first 32 bytes of the font payload.
+  const out = new Uint8Array(bytes);
+  for (let i = 0; i < Math.min(32, out.length); i++) out[i] = (out[i] ?? 0) ^ key[15 - (i % 16)]!;
+  if (!looksLikeSfnt(out)) {
+    // A few producers use the GUID binary/little-endian representation.  Try it
+    // as a guarded fallback rather than silently returning a broken font.
+    const altKey = guidLittleEndianBytes(guid);
+    const alt = new Uint8Array(bytes);
+    for (let i = 0; i < Math.min(32, alt.length); i++) alt[i] = (alt[i] ?? 0) ^ altKey[15 - (i % 16)]!;
+    if (looksLikeSfnt(alt)) return alt;
+  }
+  return out;
+}
+
+function guidLittleEndianBytes(hex: string): Uint8Array {
+  const b = new Uint8Array(16);
+  const raw = new Uint8Array(16);
+  for (let i = 0; i < 16; i++) raw[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  b[0] = raw[3]!; b[1] = raw[2]!; b[2] = raw[1]!; b[3] = raw[0]!;
+  b[4] = raw[5]!; b[5] = raw[4]!;
+  b[6] = raw[7]!; b[7] = raw[6]!;
+  for (let i = 8; i < 16; i++) b[i] = raw[i]!;
+  return b;
+}
+
+function looksLikeSfnt(bytes: Uint8Array): boolean {
+  if (bytes.length < 4) return false;
+  const tag = String.fromCharCode(bytes[0]!, bytes[1]!, bytes[2]!, bytes[3]!);
+  return tag === 'OTTO' || tag === 'true' || tag === 'typ1' || tag === 'ttcf' || (bytes[0] === 0 && bytes[1] === 1 && bytes[2] === 0 && bytes[3] === 0);
 }
 
 function hashString(s: string): string {
