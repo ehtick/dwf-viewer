@@ -1,4 +1,4 @@
-import { DwfViewer } from '../dist/index.js?v=0.6.1';
+import { DwfViewer } from '../dist/index.js?v=0.6.3';
 
 const $ = (id) => document.getElementById(id);
 const DEFAULT_DEMO_ID = 'blocks-tables-2d';

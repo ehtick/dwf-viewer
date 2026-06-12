@@ -33,4 +33,52 @@ for (const t of targets) {
   if (typeof t.maxNonInfoDiagnostics === 'number' && nonInfo.length > t.maxNonInfoDiagnostics) failed = true;
   if (typeof t.maxPageDiagnostics === 'number' && (page?.diagnostics?.length ?? 0) > t.maxPageDiagnostics) failed = true;
 }
+
+// Browser compatibility regression: some DWFx eModel content-definition XML uses
+// invalid legacy namespace declarations such as xmlns:schemaLocation. Strict
+// browser DOMParser implementations reject that form, so parseXml must repair
+// or fall back without surfacing EMODEL_CONTENTDEF_PARSE_FAILED warnings.
+{
+  const previous = globalThis.DOMParser;
+  globalThis.DOMParser = class {
+    parseFromString() {
+      return {
+        getElementsByTagName(name) {
+          return name === 'parsererror' ? [{ textContent: 'simulated strict namespace parser error' }] : [];
+        }
+      };
+    }
+  };
+
+  const { parseXml } = await import('../dist/format/util.js');
+  const invalid = '<dwf:SectionContent xmlns:dwf="DWF-ContentResource:1.0" xmlns:schemaLocation="DWF-ContentResource:1.0 http://autodesk.com/global/dwf/sectioncontent.xsd" version="1.0"><dwf:Instances><dwf:Instance id="i1" renderableRef="r1"/></dwf:Instances></dwf:SectionContent>';
+  const doc = parseXml(invalid, 'browser-strict-dwf-content.xml');
+  const instances = Array.from(doc.getElementsByTagName('*')).filter(e => (e.localName || e.nodeName).replace(/^.*:/, '') === 'Instance');
+  if (instances.length !== 1 || instances[0].getAttribute('renderableRef') !== 'r1') {
+    failed = true;
+    console.error('Browser XML tolerance regression failed.');
+  } else {
+    console.log(JSON.stringify({ label: 'browser strict XML tolerance', instances: instances.length, diagnostics: [] }, null, 2));
+  }
+
+  const strictDoc = await openDwfDocument(await readFile('examples/robot-arm.dwfx'), { fileName: 'examples/robot-arm.dwfx' });
+  const strictPage = strictDoc.pageData[0];
+  const strictNonInfo = (strictPage?.diagnostics ?? []).filter(d => d.level !== 'info');
+  const strictRecord = {
+    label: 'Robot Arm under strict browser DOMParser simulation',
+    pageKind: strictPage?.kind,
+    diagnostics: strictPage?.diagnostics ?? [],
+    meshes: strictPage?.kind === 'w3d-model' ? strictPage.model.meshes.length : undefined,
+    triangles: strictPage?.kind === 'w3d-model' ? strictPage.model.stats.triangleCount : undefined
+  };
+  console.log(JSON.stringify(strictRecord, null, 2));
+  if (!strictPage || strictPage.kind !== 'w3d-model' || strictNonInfo.length !== 0 || (strictPage.diagnostics?.length ?? 0) !== 0) {
+    failed = true;
+    console.error('Strict browser DOMParser simulation opened Robot Arm with diagnostics or wrong page kind.');
+  }
+
+  if (previous === undefined) delete globalThis.DOMParser;
+  else globalThis.DOMParser = previous;
+}
+
 if (failed) process.exit(1);

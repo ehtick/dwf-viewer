@@ -13,7 +13,7 @@ English is the default language for the README, npm package, and online demo. Th
 | npm | https://www.npmjs.com/package/dwf-viewer |
 | scoped npm | https://www.npmjs.com/package/@flyfish-dev/dwf-viewer |
 
-Current version: `0.6.1`
+Current version: `0.6.3`
 
 ## Why
 
@@ -124,6 +124,12 @@ new DwfViewer(el, {
 ```
 
 XPS/DWFx `Glyphs` use embedded TrueType fonts when the browser allows `FontFace` loading. Very small text is skipped in adaptive overview mode and appears normally when zoomed in; this avoids unreadable annotation blocks in dense architectural sheets.
+
+## Browser XML Tolerance
+
+Version `0.6.3` adds a repair-and-fallback path for legacy Autodesk eModel XML metadata that strict browser `DOMParser` implementations reject, especially invalid `xmlns:schemaLocation` declarations emitted by older DWF Toolkit pipelines. The loader now tries strict XML parsing first, applies a targeted Autodesk metadata repair when needed, and then falls back to the dependency-free XML tree parser used by non-DOM runtimes.
+
+This keeps valid 3D DWFx models from surfacing noisy `EMODEL_CONTENTDEF_PARSE_FAILED` diagnostics when only optional metadata XML is malformed.
 
 ## Three.js Integration
 

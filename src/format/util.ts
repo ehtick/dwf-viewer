@@ -51,21 +51,56 @@ export function childElements(el: ParentNode): Element[] {
 }
 
 export function parseXml(xml: string, source = 'document.xml'): Document {
-  if (typeof DOMParser !== 'undefined') {
-    const doc = new DOMParser().parseFromString(xml, 'application/xml');
-    const err = doc.getElementsByTagName('parsererror')[0];
-    if (err) throw new Error(`XML parse error in ${source}: ${err.textContent?.slice(0, 180) ?? 'unknown error'}`);
-    return doc;
+  // Some Autodesk-authored DWFx eModel XML resources found in the wild are not
+  // namespace-valid XML. A common example is
+  //   xmlns:schemaLocation="DWF-ContentResource:1.0 http://.../sectioncontent.xsd"
+  // where the intent was schemaLocation metadata, not a namespace declaration.
+  // Browser DOMParser implementations reject this, while our lightweight parser can
+  // still read the element/attribute data needed by the viewer. For production we
+  // therefore try strict DOM parsing first, then a tiny Autodesk-specific repair,
+  // then the tolerant fallback parser. This avoids warning spam and prevents valid
+  // 3D models from being shown as unsupported merely because optional metadata XML
+  // used a legacy namespace declaration.
+  const strict = tryParseXmlWithDomParser(xml);
+  if (strict) return strict;
+
+  const repaired = repairAutodeskXml(xml);
+  if (repaired !== xml) {
+    const strictRepaired = tryParseXmlWithDomParser(repaired);
+    if (strictRepaired) return strictRepaired;
   }
-  // Node.js and some worker-like runtimes do not expose DOMParser. Keep the core
-  // package dependency-free by falling back to a small XML tree parser that implements
-  // only the DOM surface used by the DWF/DWFx readers: getElementsByTagName,
-  // getAttribute, attributes, localName, nodeName, nodeType, childNodes, and textContent.
+
   try {
-    return parseXmlFallback(xml) as unknown as Document;
+    return parseXmlFallback(repaired) as unknown as Document;
   } catch (err) {
     throw new Error(`XML parse error in ${source}: ${String(err)}`);
   }
+}
+
+function tryParseXmlWithDomParser(xml: string): Document | undefined {
+  if (typeof DOMParser === 'undefined') return undefined;
+  try {
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    const err = doc.getElementsByTagName('parsererror')[0];
+    return err ? undefined : doc;
+  } catch {
+    return undefined;
+  }
+}
+
+export function repairAutodeskXml(xml: string): string {
+  let out = xml;
+  // Invalid in several DWF Toolkit generated files. The schema location is not
+  // needed by the viewer, so removing it is safer than trying to reinterpret it.
+  out = out.replace(/\s+xmlns:(?:schemaLocation|noNamespaceSchemaLocation)\s*=\s*("[^"]*"|'[^']*')/g, '');
+
+  // Some files use xsi:schemaLocation but omit the xmlns:xsi declaration. Keep
+  // the attribute and add the missing namespace declaration to the root tag.
+  if (/\s+xsi:schemaLocation\s*=/.test(out) && !/\s+xmlns:xsi\s*=/.test(out)) {
+    out = out.replace(/<([A-Za-z_][\w.:-]*)(?=\s|>|\/)/, '<$1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"');
+  }
+
+  return out;
 }
 
 interface SimpleAttr {

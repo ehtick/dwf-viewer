@@ -1,9 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.6.3 - 2026-06-12
 
 - Updated public positioning to describe DWF Viewer as the world's first open-source pure frontend DWF/DWFx preview component.
 - Made the demo UI English by default and added a Chinese language switch.
+- Fixed strict browser XML parsing of legacy Autodesk eModel metadata that contains invalid `xmlns:schemaLocation` declarations.
+- Added production regression coverage for strict browser `DOMParser` behavior while keeping the Autodesk Floor Plans A03 and Robot Arm validations.
+- Merged the latest 0.6.3 code while preserving the local Cloudflare Pages deployment flow, AGPL/NOTICE packaging, and dual npm publish helper.
 
 ## 0.6.1
 
