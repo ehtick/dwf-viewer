@@ -1,6 +1,7 @@
-import { DwfViewer } from '../dist/index.js?v=0.6.0';
+import { DwfViewer } from '../dist/index.js?v=0.6.1';
 
 const $ = (id) => document.getElementById(id);
+const DEFAULT_DEMO_ID = 'blocks-tables-2d';
 const viewer = new DwfViewer($('viewer'), {
   wasmUrl: '../public/dwfv-render.wasm',
   preferWebgl: true,
@@ -29,6 +30,7 @@ async function loadManifest() {
     option.textContent = demo.title;
     select.append(option);
   }
+  select.value = demos.some(d => d.id === DEFAULT_DEMO_ID) ? DEFAULT_DEMO_ID : (demos[0]?.id ?? '');
   select.addEventListener('change', updateHint);
   updateHint();
 }
@@ -67,4 +69,4 @@ $('wasm').addEventListener('change', event => viewer.setPreferWasm(event.target.
 $('lineMode').addEventListener('change', event => viewer.setLineWeightMode(event.target.value));
 
 await loadManifest();
-await loadDemo(demos[0]);
+await loadDemo(selectedDemo());

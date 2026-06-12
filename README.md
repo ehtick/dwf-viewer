@@ -11,7 +11,7 @@ Pure frontend DWF/DWFx CAD viewer for browsers. It parses DWF/DWFx packages loca
 | npm | https://www.npmjs.com/package/dwf-viewer |
 | scoped npm | https://www.npmjs.com/package/@flyfish-dev/dwf-viewer |
 
-Current version: `0.6.0`
+Current version: `0.6.1`
 
 ## Why
 
@@ -84,7 +84,7 @@ cp node_modules/@flyfish-dev/dwf-viewer/public/dwfv-render.wasm public/dwfv-rend
 
 ## WebGL 2D Rendering
 
-Version `0.6.0` adds WebGL-accelerated XPS/DWFx 2D vector rendering through `WebGlXpsBackend`, alongside the existing W2D WebGL path.
+Version `0.6.x` adds WebGL-accelerated XPS/DWFx 2D vector rendering through `WebGlXpsBackend`, alongside the existing W2D WebGL path.
 
 The built-in viewer uses WebGL for Classic W2D and DWFx/XPS vector geometry when `preferWebgl` is enabled. Geometry is uploaded to GPU buffers and cached by page and zoom bucket; pan operations update shader uniforms. Text, images, and XPS image brushes stay on the transparent Canvas overlay so browser font rendering and bitmap decoding remain reliable.
 
@@ -157,9 +157,9 @@ The demo examples are listed in `examples/manifest.json` and are intentionally d
 
 | Example | Purpose |
 |---|---|
-| `autodesk-floor-plans.dwfx` | Multi-page architectural DWFx/XPS sample, defaulting to A03 First Floor Plan for WebGL XPS, embedded font, and thin-line overview validation |
+| `blocks-and-tables.dwf` | Default demo. Binary WHIP!/W2D ePlot sample with fast loading and a clear first impression |
+| `autodesk-floor-plans.dwfx` | Multi-page architectural DWFx/XPS sample, using A03 First Floor Plan for WebGL XPS, embedded font, and thin-line overview validation |
 | `robot-arm.dwfx` | 3D W3D/HSF eModel with shell meshes, scene tree, materials, textures, and saved views |
-| `blocks-and-tables.dwf` | Binary WHIP!/W2D ePlot sample |
 | `minimal-xps.dwfx` | Small DWFx/XPS FixedPage sample |
 | `text-w2d.dwf` | Textual W2D smoke-test sample |
 

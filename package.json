@@ -1,6 +1,6 @@
 {
   "name": "dwf-viewer",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": false,
   "type": "module",
   "description": "Pure frontend DWF/DWFx CAD viewer with WebGL-accelerated XPS/W2D 2D rendering, W3D/HSF 3D rendering, embedded XPS fonts, and optional WASM fallback.",

@@ -1,11 +1,23 @@
 [
   {
+    "id": "blocks-tables-2d",
+    "title": "Blocks and Tables · Binary W2D DWF",
+    "kind": "2d",
+    "path": "blocks-and-tables.dwf",
+    "description": "Autodesk 官方二进制 WHIP!/W2D ePlot 示例，默认加载，观感清晰且打开速度快，用于验证 WebGL vector backend。",
+    "expected": {
+      "pageKind": "w2d-text",
+      "pages": 2,
+      "maxWarnings": 0
+    }
+  },
+  {
     "id": "autodesk-floor-plans-dwfx",
     "title": "Autodesk Floor Plans · 2D DWFx/XPS",
     "kind": "2d",
     "path": "autodesk-floor-plans.dwfx",
     "pageIndex": 3,
-    "description": "多页建筑图纸示例，默认打开 A03 First Floor Plan，用于验证 XPS WebGL、嵌入字体、细线总览与缩放性能。",
+    "description": "多页建筑图纸示例，可切换到 A03 First Floor Plan，用于验证 XPS WebGL、嵌入字体、细线总览与缩放性能。",
     "expected": {
       "pageKind": "xps-fixed-page",
       "pages": 18,
@@ -22,18 +34,6 @@
       "pageKind": "w3d-model",
       "minMeshes": 30,
       "minTriangles": 40000,
-      "maxWarnings": 0
-    }
-  },
-  {
-    "id": "blocks-tables-2d",
-    "title": "Blocks and Tables · Binary W2D DWF",
-    "kind": "2d",
-    "path": "blocks-and-tables.dwf",
-    "description": "Autodesk 官方二进制 WHIP!/W2D ePlot 示例，验证 WebGL vector backend。",
-    "expected": {
-      "pageKind": "w2d-text",
-      "pages": 2,
       "maxWarnings": 0
     }
   },

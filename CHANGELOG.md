@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1
+
+- Changed the public demo default sample to `Blocks and Tables · Binary W2D DWF` for a faster and clearer first load.
+- Kept Autodesk Floor Plans as an optional XPS WebGL validation sample instead of loading the large DWFx file by default.
+- Updated demo asset versioning to `dist-v0.6.1`.
+
 ## 0.6.0
 
 - Added WebGL-accelerated XPS/DWFx 2D vector rendering through `WebGlXpsBackend`.
