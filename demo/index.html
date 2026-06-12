@@ -9,17 +9,63 @@
   <style>
     html, body { height: 100%; margin: 0; }
     body { display: grid; grid-template-rows: auto 1fr; background: #f6f7f9; color: #111827; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    .app-header { display: grid; grid-template-columns: auto auto 1fr auto; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid #d6d8dd; background: #fff; }
-    .brand { display: flex; flex-direction: column; gap: 2px; }
-    .brand strong { font-size: 16px; }
-    .brand small { color: #6b7280; }
-    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .app-header { display: grid; grid-template-columns: minmax(170px, 260px) minmax(360px, 1fr) auto; gap: 14px; align-items: center; padding: 10px 14px; border-bottom: 1px solid #dfe3ea; background: rgba(255,255,255,.96); box-shadow: 0 1px 2px rgba(15,23,42,.04); box-sizing: border-box; }
+    .brand { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .brand strong { font-size: 16px; line-height: 1.1; }
+    .brand small { max-width: 280px; color: #6b7280; font-size: 12px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .primary-area { min-width: 0; display: grid; gap: 5px; }
+    .controls { width: 100%; min-width: 0; display: grid; grid-template-columns: minmax(240px, 520px) auto auto; gap: 8px; align-items: center; justify-content: start; }
     button, select, input { font: inherit; }
-    #demoSelect { min-width: 280px; }
-    #viewer { min-height: 0; }
-    .hint { color: #6b7280; font-size: 12px; }
-    .toggles { display: flex; gap: 12px; align-items: center; white-space: nowrap; }
-    @media (max-width: 900px) { .app-header { grid-template-columns: 1fr; } .toggles { flex-wrap: wrap; } }
+    button, .file-button, summary { border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #111827; min-height: 32px; padding: 0 11px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-sizing: border-box; }
+    button:hover, .file-button:hover, summary:hover { border-color: #94a3b8; background: #f8fafc; }
+    button:disabled, .file-button.is-disabled { cursor: not-allowed; opacity: .58; }
+    .primary-button { border-color: #2563eb; background: #2563eb; color: #fff; font-weight: 650; }
+    .primary-button:hover { border-color: #1d4ed8; background: #1d4ed8; }
+    #demoSelect { width: min(52vw, 520px); max-width: 100%; min-width: 240px; min-height: 32px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 30px 0 9px; background: #fff; }
+    .hint { max-width: 760px; color: #6b7280; font-size: 12px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .header-meta { display: flex; gap: 10px; align-items: center; justify-content: end; white-space: nowrap; }
+    .load-status { width: 230px; display: grid; gap: 5px; color: #475569; font-size: 12px; }
+    .load-status[hidden] { display: none; }
+    .progress-track { height: 5px; overflow: hidden; border-radius: 999px; background: #e2e8f0; }
+    .progress-bar { display: block; width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #2563eb, #14b8a6); transition: width .18s ease; }
+    .progress-bar.is-indeterminate { width: 42%; animation: indeterminate 1.1s ease-in-out infinite; }
+    .settings { position: relative; }
+    .settings summary { list-style: none; }
+    .settings summary::-webkit-details-marker { display: none; }
+    .settings:not([open]) .settings-menu { display: none; }
+    .settings-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 5; display: grid; gap: 10px; min-width: 250px; padding: 12px; border: 1px solid #d7dce5; border-radius: 8px; background: #fff; box-shadow: 0 16px 40px rgba(15,23,42,.16); }
+    .settings-menu label, .language-control { display: flex; gap: 7px; align-items: center; color: #334155; font-size: 13px; }
+    .settings-menu select, .language-control select { min-height: 30px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .viewer-shell { position: relative; min-height: 0; }
+    #viewer { height: 100%; min-height: 0; }
+    .load-overlay { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; background: rgba(248,250,252,.52); backdrop-filter: blur(1.5px); }
+    .load-overlay[hidden] { display: none; }
+    .load-card { width: min(420px, calc(100vw - 40px)); border: 1px solid #d7dce5; border-radius: 8px; background: rgba(255,255,255,.96); box-shadow: 0 18px 48px rgba(15,23,42,.16); padding: 16px; }
+    .load-card strong { display: block; margin-bottom: 5px; font-size: 15px; }
+    .load-card p { margin: 0 0 12px; color: #64748b; font-size: 13px; line-height: 1.35; }
+    .load-card.is-error strong { color: #b91c1c; }
+    .load-card.is-error .progress-bar { background: #ef4444; }
+    .dwfv-toolbar select { max-width: min(56vw, 520px); min-width: 0; }
+    @keyframes indeterminate { 0% { transform: translateX(-110%); } 100% { transform: translateX(250%); } }
+    @media (max-width: 1100px) {
+      .app-header { grid-template-columns: minmax(0, 1fr); align-items: stretch; width: 100vw; max-width: 100vw; }
+      .primary-area, .header-meta { max-width: calc(100vw - 28px); }
+      .controls { max-width: 100%; }
+      .header-meta { justify-content: start; flex-wrap: wrap; }
+      .load-status { width: min(100%, 420px); }
+      #demoSelect { width: 100%; }
+    }
+    @media (max-width: 700px) {
+      .controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); justify-content: stretch; }
+      #demoSelect { grid-column: 1 / -1; width: 100%; min-width: 0; }
+      .controls button, .file-button { width: 100%; }
+      .settings-menu { left: 0; right: auto; }
+      .hint { white-space: normal; }
+      .dwfv-toolbar { flex-wrap: wrap; gap: 6px; padding: 7px 10px; }
+      .dwfv-toolbar select { flex: 1 1 220px; max-width: calc(100vw - 20px); }
+      .dwfv-status { flex: 1 1 100%; margin-left: 0; }
+    }
   </style>
 </head>
 <body>
@@ -28,21 +74,41 @@
       <strong>DWF Viewer</strong>
       <small data-i18n="tagline">World's first open-source pure frontend DWF/DWFx preview component</small>
     </div>
-    <input id="file" type="file" accept=".dwf,.dwfx,model/vnd.dwf,application/vnd.ms-xpsdocument" aria-label="Open local DWF or DWFx file" />
-    <div class="controls">
-      <select id="demoSelect" aria-label="Example file"></select>
-      <button id="loadDemo" data-i18n="loadSample">Load sample</button>
-      <button id="fit" data-i18n="fit">Fit</button>
+    <div class="primary-area">
+      <div class="controls">
+        <select id="demoSelect" aria-label="Example file"></select>
+        <button id="loadDemo" class="primary-button" data-i18n="loadSample">Load sample</button>
+        <label id="fileButton" class="file-button" for="file" data-i18n="openFile">Open file</label>
+        <input id="file" class="visually-hidden" type="file" accept=".dwf,.dwfx,model/vnd.dwf,application/vnd.ms-xpsdocument" aria-label="Open local DWF or DWFx file" />
+      </div>
       <span id="demoHint" class="hint"></span>
     </div>
-    <div class="toggles">
-      <label><input id="webgl" type="checkbox" checked /> <span data-i18n="webgl">WebGL acceleration</span></label>
-      <label><input id="wasm" type="checkbox" checked /> <span data-i18n="wasm">WASM fallback</span></label>
-      <label><span data-i18n="lineWeight">Line weight</span> <select id="lineMode"><option value="adaptive" selected>CAD adaptive</option><option value="hairline">Hairline</option><option value="physical">Physical</option></select></label>
-      <label><span data-i18n="language">Language</span> <select id="language" aria-label="Language"><option value="en" selected>English</option><option value="zh">中文</option></select></label>
+    <div class="header-meta">
+      <div id="loadStatus" class="load-status" hidden aria-live="polite">
+        <span id="loadStatusText">Ready</span>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100"><span id="loadProgressBar" class="progress-bar"></span></div>
+      </div>
+      <details id="settings" class="settings">
+        <summary data-i18n="settings">Settings</summary>
+        <div class="settings-menu">
+          <label><input id="webgl" type="checkbox" checked /> <span data-i18n="webgl">WebGL acceleration</span></label>
+          <label><input id="wasm" type="checkbox" checked /> <span data-i18n="wasm">WASM fallback</span></label>
+          <label><span data-i18n="lineWeight">Line weight</span> <select id="lineMode"><option value="adaptive" selected>CAD adaptive</option><option value="hairline">Hairline</option><option value="physical">Physical</option></select></label>
+        </div>
+      </details>
+      <label class="language-control"><span data-i18n="language">Language</span> <select id="language" aria-label="Language"><option value="en" selected>English</option><option value="zh">中文</option></select></label>
     </div>
   </header>
-  <main id="viewer"></main>
+  <main id="viewerShell" class="viewer-shell" aria-busy="false">
+    <div id="viewer"></div>
+    <div id="loadOverlay" class="load-overlay" hidden>
+      <div id="loadCard" class="load-card">
+        <strong id="loadOverlayTitle">Loading</strong>
+        <p id="loadOverlayDetail">Preparing viewer...</p>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100"><span id="loadOverlayBar" class="progress-bar is-indeterminate"></span></div>
+      </div>
+    </div>
+  </main>
   <script type="module" src="./app.js"></script>
 </body>
 </html>

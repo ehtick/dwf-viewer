@@ -239,6 +239,7 @@ function parseSceneNode(el: Element, labelByContentRef: Map<string, W3dSceneNode
 
 function attachSelectionMetadata(model: W3dModelData, instances: InstanceInfo[], labelByContentRef: Map<string, W3dSceneNodeData>, instanceMaterials: Map<string, W3dMaterialData>): void {
   const labelForRef = new Map<string, W3dSceneNodeData>(labelByContentRef);
+  const canBindMaterialsByOrdinal = instances.length === model.meshes.length;
   instances.forEach((inst, i) => {
     const mesh = model.meshes[i];
     if (!mesh) return;
@@ -246,7 +247,7 @@ function attachSelectionMetadata(model: W3dModelData, instances: InstanceInfo[],
     mesh.selectionRefs = refs;
     mesh.nodeId = inst.node;
     const mat = instanceMaterials.get(inst.id) ?? (inst.renderableRef ? instanceMaterials.get(inst.renderableRef) : undefined);
-    if (mat) {
+    if (mat && canBindMaterialsByOrdinal) {
       mesh.materialId = mat.id;
       mesh.color = mat.color;
     }

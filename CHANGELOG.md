@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.4 - 2026-06-12
+
+- Restored colorful W3D/HSF 3D rendering for eModel files whose ContentDefinition instance count does not match decoded shell geometry, avoiding incorrect ordinal material binding that could wash Robot Arm into gray.
+- Added production regression coverage for 3D mesh color diversity alongside the existing Robot Arm geometry, strict XML, XPS, W2D, and package checks.
+- Cleaned up the demo header by moving advanced rendering controls into Settings, replacing the native file input with a compact Open file action, and removing the duplicate top-level Fit button.
+- Added visible load progress for sample downloads and local file reads, including an overlay, top status bar, disabled controls while loading, and inline load failures.
+- Improved responsive demo layout so the default Blocks and Tables page remains clean on desktop and avoids horizontal overflow on narrow mobile viewports.
+
 ## 0.6.3 - 2026-06-12
 
 - Updated public positioning to describe DWF Viewer as the world's first open-source pure frontend DWF/DWFx preview component.

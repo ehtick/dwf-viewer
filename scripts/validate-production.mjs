@@ -3,7 +3,7 @@ import { openDwfDocument } from '../dist/index.js';
 
 const targets = [
   { label: 'Autodesk Floor Plans DWFx A03', path: 'examples/autodesk-floor-plans.dwfx', pageIndex: 3, kind: 'xps-fixed-page', minPages: 18, maxNonInfoDiagnostics: 0 },
-  { label: 'Robot Arm 3D DWFx', path: 'examples/robot-arm.dwfx', kind: 'w3d-model', minMeshes: 30, minTriangles: 40000, maxNonInfoDiagnostics: 0, maxPageDiagnostics: 0 },
+  { label: 'Robot Arm 3D DWFx', path: 'examples/robot-arm.dwfx', kind: 'w3d-model', minMeshes: 30, minTriangles: 40000, minDistinctMeshColors: 24, maxNonInfoDiagnostics: 0, maxPageDiagnostics: 0 },
   { label: '2D sample DWFx', path: 'examples/minimal-xps.dwfx', kind: 'xps-fixed-page' },
   { label: 'official binary W2D DWF', path: 'examples/blocks-and-tables.dwf', kind: 'w2d-text' }
 ];
@@ -22,6 +22,7 @@ for (const t of targets) {
     pageName: page?.name,
     meshes: page?.kind === 'w3d-model' ? page.model.meshes.length : undefined,
     triangles: page?.kind === 'w3d-model' ? page.model.stats.triangleCount : undefined,
+    distinctMeshColors: page?.kind === 'w3d-model' ? distinctMeshColors(page) : undefined,
     nonInfoDiagnostics: nonInfo.length,
     diagnostics: nonInfo
   };
@@ -30,6 +31,7 @@ for (const t of targets) {
   if (typeof t.minPages === 'number' && doc.pageData.length < t.minPages) failed = true;
   if (typeof t.minMeshes === 'number' && (!(page?.kind === 'w3d-model') || page.model.meshes.length < t.minMeshes)) failed = true;
   if (typeof t.minTriangles === 'number' && (!(page?.kind === 'w3d-model') || page.model.stats.triangleCount < t.minTriangles)) failed = true;
+  if (typeof t.minDistinctMeshColors === 'number' && (!(page?.kind === 'w3d-model') || distinctMeshColors(page) < t.minDistinctMeshColors)) failed = true;
   if (typeof t.maxNonInfoDiagnostics === 'number' && nonInfo.length > t.maxNonInfoDiagnostics) failed = true;
   if (typeof t.maxPageDiagnostics === 'number' && (page?.diagnostics?.length ?? 0) > t.maxPageDiagnostics) failed = true;
 }
@@ -82,3 +84,7 @@ for (const t of targets) {
 }
 
 if (failed) process.exit(1);
+
+function distinctMeshColors(page) {
+  return new Set(page.model.meshes.map(mesh => (mesh.color ?? []).map(v => Number(v).toFixed(4)).join(','))).size;
+}

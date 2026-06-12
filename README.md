@@ -13,7 +13,7 @@ English is the default language for the README, npm package, and online demo. Th
 | npm | https://www.npmjs.com/package/dwf-viewer |
 | scoped npm | https://www.npmjs.com/package/@flyfish-dev/dwf-viewer |
 
-Current version: `0.6.3`
+Current version: `0.6.4`
 
 ## Why
 
