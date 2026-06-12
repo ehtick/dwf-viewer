@@ -1,4 +1,4 @@
-import { DwfViewer } from '../dist/index.js?v=0.5.0';
+import { DwfViewer } from '../dist/index.js?v=0.5.1';
 
 const $ = (id) => document.getElementById(id);
 const viewer = new DwfViewer($('viewer'), {
@@ -8,7 +8,10 @@ const viewer = new DwfViewer($('viewer'), {
   maxDevicePixelRatio: 2,
   maxCanvasPixels: 16_777_216,
   maxGpuCacheBytes: 160 * 1024 * 1024,
-  maxCachedScenes: 2
+  maxCachedScenes: 2,
+  lineWeightMode: 'adaptive',
+  minTextCssPx: 3.5,
+  maxOverviewStrokeCssPx: 1.15
 });
 
 let demos = [];
@@ -44,19 +47,21 @@ async function loadDemo(demo = selectedDemo()) {
   await viewer.load(await res.arrayBuffer(), {
     fileName: demo.path,
     preferWebgl: $('webgl').checked,
-    preferWasm: $('wasm').checked
+    preferWasm: $('wasm').checked,
+    lineWeightMode: $('lineMode').value
   });
 }
 
 $('file').addEventListener('change', async (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
-  await viewer.load(file, { preferWebgl: $('webgl').checked, preferWasm: $('wasm').checked });
+  await viewer.load(file, { preferWebgl: $('webgl').checked, preferWasm: $('wasm').checked, lineWeightMode: $('lineMode').value });
 });
 $('loadDemo').addEventListener('click', () => loadDemo().catch(err => alert(String(err))));
 $('fit').addEventListener('click', () => viewer.fit());
 $('webgl').addEventListener('change', event => viewer.setPreferWebgl(event.target.checked));
 $('wasm').addEventListener('change', event => viewer.setPreferWasm(event.target.checked));
+$('lineMode').addEventListener('change', event => viewer.setLineWeightMode(event.target.value));
 
 await loadManifest();
 await loadDemo(demos[0]);

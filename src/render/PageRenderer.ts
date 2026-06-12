@@ -7,6 +7,11 @@ import { ThreeW3dRenderer } from './ThreeW3dRenderer.js';
 
 export interface GenericRenderOptions {
   zoom?: number;
+  lineWeightMode?: 'adaptive' | 'physical' | 'hairline';
+  minStrokeCssPx?: number;
+  maxOverviewStrokeCssPx?: number;
+  minTextCssPx?: number;
+  minFilledAreaCssPx?: number;
   panX?: number;
   panY?: number;
   preferWebgl?: boolean;

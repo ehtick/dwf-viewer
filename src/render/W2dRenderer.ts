@@ -2,11 +2,12 @@ import { actionableDiagnostics, diag, type Diagnostic, type RenderStats } from '
 import type { W2dPrimitive, W2dTextPageData } from '../format/document.js';
 import { applyPathToCanvas, flattenPath } from './xpsPath.js';
 import { multiplyMatrix, parseBrushColor, transformPoint, type Matrix2D } from './style.js';
+import { adaptiveStrokeUserWidth, canvasDpr, estimateMatrixScale, shouldDrawTextByPixelSize, type CadLineStyleOptions } from './cadLineStyle.js';
 import { matrixForW2d } from './viewport.js';
 import { WasmRasterBackend } from '../wasm/WasmRasterBackend.js';
 import { WebGlW2dBackend } from './WebGlW2dBackend.js';
 
-export interface W2dRenderOptions {
+export interface W2dRenderOptions extends CadLineStyleOptions {
   zoom?: number;
   panX?: number;
   panY?: number;
@@ -47,6 +48,7 @@ export class W2dRenderer {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('CanvasRenderingContext2D is not available.');
     const pageMatrix = matrixForW2d(page, canvas.width, canvas.height, options.zoom, options.panX, options.panY);
+    const runtime = { dpr: canvasDpr(canvas), zoom: options.zoom ?? 1 };
     let commands = 0;
 
     if (options.preferWasm) {
@@ -54,10 +56,10 @@ export class W2dRenderer {
         this.wasm ??= new WasmRasterBackend({ wasmUrl: options.wasmUrl });
         await this.wasm.init();
         this.wasm.begin(canvas.width, canvas.height, bg);
-        for (const p of page.primitives) commands += this.drawPrimitiveWasm(p, pageMatrix);
+        for (const p of page.primitives) commands += this.drawPrimitiveWasm(p, pageMatrix, options, runtime);
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.putImageData(this.wasm.toImageData(), 0, 0);
-        for (const p of page.primitives.filter(p => p.type === 'text')) commands += this.drawPrimitiveCanvas(ctx, p, pageMatrix);
+        for (const p of page.primitives.filter(p => p.type === 'text')) commands += this.drawPrimitiveCanvas(ctx, p, pageMatrix, options, runtime);
         return { backend: 'wasm-raster', commands, warnings };
       } catch (err) {
         warnings.push(diag('warning', 'WASM_BACKEND_FALLBACK', `WASM raster path failed, falling back to Canvas2D: ${String(err)}`, page.sourcePath));
@@ -69,7 +71,7 @@ export class W2dRenderer {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.restore();
-    for (const p of page.primitives) commands += this.drawPrimitiveCanvas(ctx, p, pageMatrix);
+    for (const p of page.primitives) commands += this.drawPrimitiveCanvas(ctx, p, pageMatrix, options, runtime);
     return { backend: 'canvas2d', commands, warnings };
   }
 
@@ -88,14 +90,14 @@ export class W2dRenderer {
     return this.webgl;
   }
 
-  private drawPrimitiveCanvas(ctx: CanvasRenderingContext2D, p: W2dPrimitive, pageMatrix: Matrix2D): number {
+  private drawPrimitiveCanvas(ctx: CanvasRenderingContext2D, p: W2dPrimitive, pageMatrix: Matrix2D, options: W2dRenderOptions, runtime: { dpr: number; zoom: number }): number {
     const matrix = multiplyMatrix(pageMatrix, p.matrix ?? { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 });
     const stroke = parseBrushColor(p.stroke ?? '#000000') ?? '#000000';
     const fill = parseBrushColor(p.fill);
     if (p.type === 'text') {
       const [x, y] = transformPoint(matrix, p.x, p.y);
-      const screenSize = Math.max(4, Math.abs((p.size ?? 12) * estimateScale(matrix)));
-      if (screenSize < 2.5 || x > ctx.canvas.width + 64 || y > ctx.canvas.height + 64 || x < -ctx.canvas.width || y < -ctx.canvas.height) return 0;
+      const screenSize = Math.max(1, Math.abs((p.size ?? 12) * estimateScale(matrix)));
+      if (!shouldDrawTextByPixelSize(p.size ?? 12, matrix, options, runtime) || x > ctx.canvas.width + 64 || y > ctx.canvas.height + 64 || x < -ctx.canvas.width || y < -ctx.canvas.height) return 0;
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.fillStyle = fill ?? stroke;
@@ -107,7 +109,7 @@ export class W2dRenderer {
     }
     ctx.save();
     ctx.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
-    ctx.lineWidth = Math.max(0.1, (p.lineWidth ?? 1));
+    ctx.lineWidth = adaptiveStrokeUserWidth(p.lineWidth ?? 1, matrix, options, runtime);
     if (p.type === 'polyline') {
       if (p.points.length >= 4) {
         ctx.beginPath();
@@ -138,25 +140,26 @@ export class W2dRenderer {
     return 1;
   }
 
-  private drawPrimitiveWasm(p: W2dPrimitive, pageMatrix: Matrix2D): number {
+  private drawPrimitiveWasm(p: W2dPrimitive, pageMatrix: Matrix2D, options: W2dRenderOptions, runtime: { dpr: number; zoom: number }): number {
     if (!this.wasm || p.type === 'text') return 0;
     const matrix = multiplyMatrix(pageMatrix, p.matrix ?? { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 });
-    const scale = estimateScale(matrix);
+    const scale = estimateMatrixScale(matrix);
+    const screenStroke = (w: number | undefined) => adaptiveStrokeUserWidth(w ?? 1, matrix, options, runtime) * scale;
     if (p.type === 'polyline') {
-      this.wasm.drawPolyline(p.points, matrix, parseBrushColor(p.stroke ?? '#000000'), (p.lineWidth ?? 1) * scale);
+      this.wasm.drawPolyline(p.points, matrix, parseBrushColor(p.stroke ?? '#000000'), screenStroke(p.lineWidth));
     } else if (p.type === 'polygon') {
       this.wasm.drawPolygon(p.points, matrix, parseBrushColor(p.fill));
-      if (p.stroke) this.wasm.drawPolyline(closePoints(p.points), matrix, parseBrushColor(p.stroke), (p.lineWidth ?? 1) * scale);
+      if (p.stroke) this.wasm.drawPolyline(closePoints(p.points), matrix, parseBrushColor(p.stroke), screenStroke(p.lineWidth));
     } else if (p.type === 'rect') {
       const pts = [p.x, p.y, p.x + p.width, p.y, p.x + p.width, p.y + p.height, p.x, p.y + p.height, p.x, p.y];
       if (p.fill) this.wasm.drawPolygon(pts, matrix, parseBrushColor(p.fill));
-      if (p.stroke) this.wasm.drawPolyline(pts, matrix, parseBrushColor(p.stroke), (p.lineWidth ?? 1) * scale);
+      if (p.stroke) this.wasm.drawPolyline(pts, matrix, parseBrushColor(p.stroke), screenStroke(p.lineWidth));
     } else if (p.type === 'path') {
       const subs = flattenPath(p.commands, 0.5);
       const fill = parseBrushColor(p.fill);
       const stroke = parseBrushColor(p.stroke);
       if (fill) for (const s of subs) if (s.closed || s.points.length >= 6) this.wasm.drawPolygon(s.points, matrix, fill);
-      if (stroke) for (const s of subs) this.wasm.drawPolyline(s.points, matrix, stroke, (p.lineWidth ?? 1) * scale);
+      if (stroke) for (const s of subs) this.wasm.drawPolyline(s.points, matrix, stroke, screenStroke(p.lineWidth));
     }
     return 1;
   }

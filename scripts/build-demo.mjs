@@ -2,8 +2,9 @@ import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const root = process.cwd();
-const out = path.join(root, 'demo-dist');
 const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+const version = String(pkg.version ?? 'dev');
+const out = path.join(root, 'demo-dist');
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
 await cp(path.join(root, 'dist'), path.join(out, 'dist'), { recursive: true });
@@ -15,7 +16,7 @@ html = html.replaceAll('../styles/', './styles/').replace('./app.js', './app.js'
 await writeFile(path.join(out, 'index.html'), html);
 let app = await readFile(path.join(root, 'demo/app.js'), 'utf8');
 app = app
-  .replaceAll("'../dist/index.js?v=0.5.0'", `'./dist/index.js?v=${pkg.version}'`)
+  .replaceAll(/'\.\.\/dist\/index\.js\?v=[^']*'/g, `'./dist/index.js?v=${version}'`)
   .replaceAll("wasmUrl: '../public/dwfv-render.wasm'", "wasmUrl: './public/dwfv-render.wasm'")
   .replaceAll("fetch('../examples/manifest.json'", "fetch('./examples/manifest.json'")
   .replaceAll('`../examples/${demo.path}`', '`./examples/${demo.path}`');

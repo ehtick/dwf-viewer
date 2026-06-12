@@ -54,7 +54,11 @@ const viewer = new DwfViewer(document.getElementById('viewer')!, {
   maxDevicePixelRatio: 2,
   maxCanvasPixels: 16_777_216,
   maxGpuCacheBytes: 160 * 1024 * 1024,
-  maxCachedScenes: 2
+  maxCachedScenes: 2,
+
+  // CAD-viewer style overview: thin readable lines at fit-to-page,
+  // source line weights return progressively while zooming in.
+  lineWeightMode: 'adaptive'
 });
 
 await viewer.load(file);
@@ -65,6 +69,31 @@ Copy the WASM asset from the package into your public assets directory:
 ```bash
 cp node_modules/dwf-viewer/public/dwfv-render.wasm public/dwfv-render.wasm
 ```
+
+## CAD line-weight rendering
+
+The default 2D rendering mode is `lineWeightMode: 'adaptive'`. This follows the behavior users expect from CAD viewers: at fit-to-page, linework is normalized toward screen-space hairlines so drawings remain readable; as zoom increases, the original DWF/XPS line weights are allowed to grow progressively. This prevents overview pages from becoming black while still preserving heavy line intent when inspecting details.
+
+Available modes:
+
+| Mode | Behavior |
+|---|---|
+| `adaptive` | Default. Overview thin-line rendering with zoom-aware recovery of source line weights. |
+| `hairline` | Force all strokes to one visible CSS-pixel hairline. Useful for dense plans and review thumbnails. |
+| `physical` | Preserve source stroke widths exactly. Useful for print-fidelity comparisons, but dense sheets can look heavy when zoomed out. |
+
+Related options:
+
+```ts
+new DwfViewer(el, {
+  lineWeightMode: 'adaptive',
+  minStrokeCssPx: 0.55,
+  maxOverviewStrokeCssPx: 1.15,
+  minTextCssPx: 3.5
+});
+```
+
+XPS/DWFx `Glyphs` use embedded TrueType fonts when the browser allows `FontFace` loading. Very small text is skipped in adaptive overview mode and appears normally when zoomed in; this avoids unreadable black blobs in architectural sheets.
 
 ## Three.js integration
 
@@ -123,6 +152,7 @@ npm run check:examples
 
 ```bash
 npm run clean
+npm run publish:all -- --dry-run
 npm run publish:all
 ```
 

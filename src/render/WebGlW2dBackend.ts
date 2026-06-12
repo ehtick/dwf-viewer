@@ -3,6 +3,7 @@ import { diag } from '../format/types.js';
 import type { W2dPrimitive, W2dTextPageData } from '../format/document.js';
 import { flattenPath } from './xpsPath.js';
 import { colorToRgba32, multiplyMatrix, transformPoint, type Matrix2D } from './style.js';
+import { adaptiveStrokeUserWidth, canvasDpr, estimateMatrixScale, type CadLineStyleOptions } from './cadLineStyle.js';
 import { matrixForW2d } from './viewport.js';
 
 interface WebGlScene {
@@ -15,7 +16,7 @@ interface WebGlScene {
   lastUsed: number;
 }
 
-export interface WebGlW2dRenderOptions {
+export interface WebGlW2dRenderOptions extends CadLineStyleOptions {
   zoom?: number;
   panX?: number;
   panY?: number;
@@ -79,11 +80,13 @@ export class WebGlW2dBackend {
     }
 
     this.resize(targetCanvas.width, targetCanvas.height);
-    const key = sceneKey(page);
+    const pageMatrix = matrixForW2d(page, this.canvas.width, this.canvas.height, options.zoom, options.panX, options.panY);
+    const runtime = { dpr: canvasDpr(targetCanvas), zoom: options.zoom ?? 1 };
+    const key = sceneKey(page, pageMatrix, options);
     let scene = this.scenes.get(key);
     const cacheHit = !!scene;
     if (!scene) {
-      scene = this.compileScene(page, key, options);
+      scene = this.compileScene(page, key, options, pageMatrix, runtime);
       this.scenes.set(key, scene);
       this.gpuBytes += scene.gpuBytes;
       this.evictIfNeeded(options);
@@ -102,7 +105,6 @@ export class WebGlW2dBackend {
     gl.clearColor(bg[0], bg[1], bg[2], bg[3]);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    const pageMatrix = matrixForW2d(page, this.canvas.width, this.canvas.height, options.zoom, options.panX, options.panY);
     gl.useProgram(this.program);
     gl.bindBuffer(gl.ARRAY_BUFFER, scene.buffer);
     gl.enableVertexAttribArray(this.aPos);
@@ -149,7 +151,7 @@ export class WebGlW2dBackend {
     }
   }
 
-  private compileScene(page: W2dTextPageData, key: string, options: WebGlW2dRenderOptions): WebGlScene {
+  private compileScene(page: W2dTextPageData, key: string, options: WebGlW2dRenderOptions, pageMatrix: Matrix2D, runtime: { dpr: number; zoom: number }): WebGlScene {
     const writer = new VertexWriter();
     let primitiveCount = 0;
     let textCount = 0;
@@ -159,7 +161,7 @@ export class WebGlW2dBackend {
         continue;
       }
       primitiveCount++;
-      appendPrimitive(writer, p);
+      appendPrimitive(writer, p, pageMatrix, options, runtime);
     }
 
     const bufferBytes = writer.byteLength;
@@ -233,8 +235,10 @@ export class WebGlW2dBackend {
 
 const IDENTITY_MATRIX: Matrix2D = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
 
-function sceneKey(page: W2dTextPageData): string {
-  return `${page.id}|${page.sourcePath}|${page.primitives.length}`;
+function sceneKey(page: W2dTextPageData, pageMatrix: Matrix2D, options: WebGlW2dRenderOptions): string {
+  const mode = options.lineWeightMode ?? 'adaptive';
+  const scaleBucket = mode === 'physical' ? 'physical' : String(Math.round(Math.log2(Math.max(1e-12, estimateMatrixScale(pageMatrix))) * 8));
+  return `${page.id}|${page.sourcePath}|${page.primitives.length}|lw:${mode}:${scaleBucket}`;
 }
 
 class VertexWriter {
@@ -276,10 +280,11 @@ class VertexWriter {
 interface RgbaBytes { r: number; g: number; b: number; a: number }
 interface Point { x: number; y: number }
 
-function appendPrimitive(writer: VertexWriter, p: Exclude<W2dPrimitive, { type: 'text' }>): void {
+function appendPrimitive(writer: VertexWriter, p: Exclude<W2dPrimitive, { type: 'text' }>, pageMatrix: Matrix2D, options: WebGlW2dRenderOptions, runtime: { dpr: number; zoom: number }): void {
   const m = p.matrix ?? IDENTITY_MATRIX;
   const matrixScale = estimateScale(m);
-  const lineWidth = Math.max(0.1, (p.lineWidth ?? 1) * matrixScale);
+  const fullMatrix = multiplyMatrix(pageMatrix, m);
+  const lineWidth = Math.max(0.01, adaptiveStrokeUserWidth(p.lineWidth ?? 1, fullMatrix, options, runtime) * matrixScale);
   if (p.type === 'polyline') {
     const color = rgbaBytes(p.stroke ?? '#000000');
     appendPolyline(writer, transformPointsArray(p.points, m), lineWidth, color);

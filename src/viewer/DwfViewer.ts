@@ -8,6 +8,11 @@ import { PageRenderer } from '../render/PageRenderer.js';
 
 export interface DwfViewerOptions {
   wasmUrl?: string;
+  lineWeightMode?: 'adaptive' | 'physical' | 'hairline';
+  minStrokeCssPx?: number;
+  maxOverviewStrokeCssPx?: number;
+  minTextCssPx?: number;
+  minFilledAreaCssPx?: number;
   preferWebgl?: boolean;
   preferWasm?: boolean;
   background?: string;
@@ -45,6 +50,11 @@ export class DwfViewer {
   private maxCanvasPixels: number;
   private maxGpuCacheBytes?: number;
   private maxCachedScenes?: number;
+  private lineWeightMode: 'adaptive' | 'physical' | 'hairline';
+  private minStrokeCssPx?: number;
+  private maxOverviewStrokeCssPx?: number;
+  private minTextCssPx?: number;
+  private minFilledAreaCssPx?: number;
   private drag?: { x: number; y: number; panX: number; panY: number; yaw: number; pitch: number; mode: 'pan2d' | 'rotate3d' | 'pan3d' };
   private yaw = -0.78;
   private pitch = 0.55;
@@ -62,6 +72,11 @@ export class DwfViewer {
     this.maxCanvasPixels = options.maxCanvasPixels ?? 16_777_216;
     this.maxGpuCacheBytes = options.maxGpuCacheBytes;
     this.maxCachedScenes = options.maxCachedScenes;
+    this.lineWeightMode = options.lineWeightMode ?? 'adaptive';
+    this.minStrokeCssPx = options.minStrokeCssPx;
+    this.maxOverviewStrokeCssPx = options.maxOverviewStrokeCssPx;
+    this.minTextCssPx = options.minTextCssPx;
+    this.minFilledAreaCssPx = options.minFilledAreaCssPx;
 
     this.root = document.createElement('div');
     this.root.className = 'dwfv-root';
@@ -117,6 +132,12 @@ export class DwfViewer {
     this.requestRender();
   }
 
+  setLineWeightMode(value: 'adaptive' | 'physical' | 'hairline'): void {
+    this.lineWeightMode = value;
+    this.renderer?.dispose();
+    this.requestRender();
+  }
+
   async load(input: ArrayBuffer | Uint8Array | Blob | File, options: LoadOptions = {}): Promise<void> {
     this.setStatus('解析文件中…');
     this.renderer?.dispose();
@@ -133,6 +154,11 @@ export class DwfViewer {
     this.background = options.background ?? this.background;
     this.maxGpuCacheBytes = options.maxGpuCacheBytes ?? this.maxGpuCacheBytes;
     this.maxCachedScenes = options.maxCachedScenes ?? this.maxCachedScenes;
+    this.lineWeightMode = options.lineWeightMode ?? this.lineWeightMode;
+    this.minStrokeCssPx = options.minStrokeCssPx ?? this.minStrokeCssPx;
+    this.maxOverviewStrokeCssPx = options.maxOverviewStrokeCssPx ?? this.maxOverviewStrokeCssPx;
+    this.minTextCssPx = options.minTextCssPx ?? this.minTextCssPx;
+    this.minFilledAreaCssPx = options.minFilledAreaCssPx ?? this.minFilledAreaCssPx;
     this.populatePages();
     this.populateModelTree();
     await this.render();
@@ -156,7 +182,12 @@ export class DwfViewer {
       maxCachedScenes: this.maxCachedScenes,
       webglCanvas: this.webglCanvas,
       yaw: this.yaw,
-      pitch: this.pitch
+      pitch: this.pitch,
+      lineWeightMode: this.lineWeightMode,
+      minStrokeCssPx: this.minStrokeCssPx,
+      maxOverviewStrokeCssPx: this.maxOverviewStrokeCssPx,
+      minTextCssPx: this.minTextCssPx,
+      minFilledAreaCssPx: this.minFilledAreaCssPx
     });
     this.pendingRender = task;
     try {

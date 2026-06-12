@@ -54,6 +54,11 @@ export interface InflateProvider {
 
 export interface PageRenderOptions {
   pageIndex?: number;
+  lineWeightMode?: 'adaptive' | 'physical' | 'hairline';
+  minStrokeCssPx?: number;
+  maxOverviewStrokeCssPx?: number;
+  minTextCssPx?: number;
+  minFilledAreaCssPx?: number;
   preferWebgl?: boolean;
   preferWasm?: boolean;
   wasmUrl?: string;
