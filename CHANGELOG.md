@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.6 - 2026-09-05
+
+- Added non-destructive fixed-color rendering for DWF, DWFx and XPS vector content.
+- Preserved source data, geometry, line weights, opacity and raster image colors while switching the render policy.
+- Cleared renderer caches when the color policy changes so Canvas, WebGL and WASM paths stay consistent.
+
 ## 0.6.5 - 2026-08-24
 
 - Added a linear-time parser for pre-DWF-6 readable WHIP!/W2D streams such as AutoCAD R14 DWF V00.34 files.
